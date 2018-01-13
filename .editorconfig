@@ -1,0 +1,21 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = false
+
+[*]
+charset = utf-8
+
+[*.java]
+indent_style = space
+indent_size = 4
+
+[*.{yaml,yml,xml,html}]
+indent_style = space
+indent_size = 2
+
+# Tab indentation (no size specified)
+[Makefile]
+indent_style = tab

@@ -1,0 +1,42 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name:  cars-api
+  labels:
+    app: cars-api
+    version: v1
+spec:
+  selector:
+    app:  cars-api
+  type: NodePort
+  ports:
+  - name:  http
+    port:  80
+    targetPort:  8080
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cars-api
+  labels:
+    app: cars-api
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app: cars-api
+  template:
+    metadata:
+      labels:
+        app: cars-api
+    spec:
+      containers:
+      - name: spring-boot
+        image: docker.io/kameshsampath/cars-api
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name:  http
+          containerPort:  8080
+          protocol: TCP

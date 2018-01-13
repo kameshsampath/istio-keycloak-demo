@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Istio KeyCloak Demo :: Cars Web Application</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+  <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="/css/narrow-jumbotron.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <header class="header clearfix">
+    <nav>
+      <ul class="nav nav-pills float-right">
+        <li class="nav-item">
+          <a class="nav-link active" href="#">Home <span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+      </ul>
+    </nav>
+    <h3 class="text-muted">Cars Web Application</h3>
+  </header>
+
+  <main role="main">
+    <div class="jumbotron">
+      <h1 class="display-3">Istio Keycloak Demo Application</h1>
+      <p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam.
+        Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,
+        ut fermentum massa justo sit amet risus.</p>
+    </div>
+    <div class="row marketing">
+      <div class="col-lg-6">
+        <span th:utext="${message}"></span>
+      </div>
+      <div class="col-lg-6">
+        <h4>My Favorite Cars List</h4>
+        <p th:each="car:${cars}" th:text="${car}">Car</p>
+      </div>
+    </div>
+  </main>
+  <footer class="footer">
+    <p>&copy; Red Hat Developers</p>
+  </footer>
+</div>
+</body>
+</html>
