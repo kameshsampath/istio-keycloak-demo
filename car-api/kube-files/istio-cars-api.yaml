@@ -9,11 +9,10 @@ metadata:
 spec:
   selector:
     app:  cars-api
-  type: NodePort
   ports:
   - name:  http
-    port:  80
-    targetPort:  8080
+    port:  8080
+  type: NodePort
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -40,7 +39,7 @@ spec:
         app: cars-api
     spec:
       containers:
-      - image: docker.io/kameshsampath/cars-api
+      - image: docker.io/kameshsampath/cars-api:1.0
         imagePullPolicy: IfNotPresent
         name: spring-boot
         ports:

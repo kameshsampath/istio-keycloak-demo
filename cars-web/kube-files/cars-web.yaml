@@ -9,7 +9,6 @@ metadata:
 spec:
   selector:
     app:  cars-web
-  type: NodePort
   ports:
   - name:  http
     port:  80
@@ -18,25 +17,34 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: cars-web
+  annotations: {}
   labels:
     app: cars-web
     version: v1
+  name: cars-web
 spec:
   replicas: 1
   selector:
-    matchLabels:
-        app: cars-web
+    app: cars-web
   template:
     metadata:
+      annotations: {}
       labels:
         app: cars-web
+        version: v1
     spec:
       containers:
       - name: spring-boot
-        image: kameshsampath/cars-web
-        imagePullPolicy: IfNotPresent
-        ports:
-        - name:  http
-          containerPort:  8080
-          protocol: TCP
+        image: docker.io/kameshsampath/cars-web:1.0
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          timeoutSeconds: 10

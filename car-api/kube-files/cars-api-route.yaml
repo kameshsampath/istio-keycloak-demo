@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Route
+metadata:
+  annotations: {}
+  labels:
+    app: cars-api
+    version: v1
+  name: cars-api
+spec:
+  port:
+    targetPort: http
+  to:
+    kind: Service
+    name: cars-api
+    weight: 100
+  wildcardPolicy: None

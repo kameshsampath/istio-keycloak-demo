@@ -1,5 +1,6 @@
 OUTPUT_DIR:="./target"
-TAG:="kameshsampath/cars-api"
+VERSION:="1.0"
+TAG:="docker.io/kameshsampath/cars-api:$(VERSION)"
 MVN_CMD:="./mvnw"
 KUBE_DEPLOYMENT="./kube-files/cars-api.yaml"
 KUBE_ISITO_DEPLOYMENT="./kube-files/istio-cars-api.yaml"
@@ -8,7 +9,6 @@ KUBE_ISITO_DEPLOYMENT="./kube-files/istio-cars-api.yaml"
 
 clean:
 	$(MVN_CMD) clean
-	rm -f $(KUBE_ISITO_DEPLOYMENT)
 
 build:
 	$(MVN_CMD) clean -DskipTests package
@@ -26,3 +26,6 @@ undeploy:
 	kubectl delete deployment cars-api
 
 all: clean  build kube-inject deploy
+
+rm-images:
+	docker images | grep cars-web | awk '{n=$1":"$2; print "\x27" n "\x27"}' | xargs docker rmi
