@@ -4,8 +4,7 @@ items:
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
-    annotations:
-      volume.beta.kubernetes.io/storage-class: standard
+    annotations: {}
     labels:
       app: keycloak
     name: keycloak-data
@@ -30,7 +29,7 @@ items:
       spec:
         containers:
         - name: keycloak
-          image: docker.io/jboss/keycloak
+          image: docker.io/jboss/keycloak:3.4.3.Final
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8080

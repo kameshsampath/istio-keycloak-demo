@@ -3,12 +3,52 @@
 Work in Progress ...
 
 == Pre-requisites
-- https://github.com/minishift/minishift#[Minishift]
-- https://istio.io/docs/setup/kubernetes/quick-start.html#[Deploy Istio]
+- https://github.com/minishift/minishift#[Minishift] - Kubernetes platform
+- https://istio.io/docs/setup/kubernetes/quick-start.html#[Deploy Istio] - check the section for OpenShift
+  (or)
+  Use the https://github.com/minishift/minishift-addons/tree/master/add-ons/istio#[istio addon for minishift]
+- https://stedolan.github.io/jq/[jq] - will be used to parse JSON responses
+
+== Download the sources 
+
+[source,sh]
+----
+git clone https://github.com/kameshsampath/istio-keycloak-demo
+----
+
+We will call this folder as `$DEMO_HOME` in rest of the document.
 
 == Deploying Keycloak
 
+Since Keycloak will be used as security provider, we will have the same deployed to `istio-system`
+namespace, 
+
+[source,sh]
+----
+oc project istio-system
+oc apply -f $DEMO_HOME/openshift-files/keycloak.yaml
+----
+
+Once Keycloak is deployed and running:
+
+* Create a realm called `istio`
+* Create a public client called `cars-web` 
+* Create a role `user`
+* Add a user say `demo` and add the user to `user` role
+
+NOTE: Work in progress do the above steps via Keycloak Admin API automatically
+
 == Deploying Istio Pilot
+
+Since the proxy module has been patched with the changes required, it is needed to redeploy istio-pilot, isito-ingress and istio-mixer to 
+use the custom proxy image `docker.io/kameshsampath/proxy_debug:master` or  `docker.io/kameshsampath/proxy:master`.  To patch the istio run
+following commands: 
+
+[source,sh]
+----
+oc apply -f $DEMO_HOME/openshift-files/istio-patch.yaml
+oc apply -f $DEMO_HOME/openshift-files/keycloak.yaml
+----
 
 == Building
 
@@ -17,3 +57,67 @@ Work in Progress ...
 Since we will be doing manual kube-inject of Istio sidecars its required that you login to OpenShift as `admin`, to have permission
 to lookup configmaps in other namespaces
 ====
+
+=== Cars API
+
+[source,sh]
+----
+./mvnw clean package
+oc apply -f $DEMO_HOME/src/istio/istio-cars-api-0.0.1-SNAPSHOT.yaml
+----
+
+=== Create Istio mixer rule
+
+Since we want to have only protected access to the application api `cars-api` list,  we need to add Istio mixer rule that will allow
+only authorized users to access the API, the following command will help to create the rule,
+
+[source,sh]
+----
+istioctl create -f $DEMO_HOME/cars-api/src/istio/mixer-rule-only-authorized.yaml
+----
+
+=== Cars Web Application
+
+NOTE: WIP post JWT-Auth change to configure the Keycloak Adapter url in a right way
+
+== Testing Application
+
+=== Without Token 
+
+[source,sh]
+----
+curl -vvv $(minishift openshift service cars-api)/cars/list
+----
+
+Above command you should see a response like `UNKNOWN:handler.denier.default:Not Authorized` as the API
+is protected
+
+=== With Token
+
+==== Generate Token
+
+[source,sh]
+---
+kubectl run -i --rm --restart=Never tokenizer --image=tutum/curl \
+--command \
+-- curl -X POST 'http://keycloak.istio-system:8080/auth/realms/istio/protocol/openid-connect/token' \
+-H "Content-Type: application/x-www-form-urlencoded" \
+-d 'username={demo-user}&password={demo-user}&grant_type=password&client_id=cars-web' | jq .access_token 
+---
+
+The above command will output Authorization token from Keycloak, store the value in an environment variable called `$token`.
+
+Once we have generated the token fire the command below with the token,
+
+[source,sh]
+----
+curl -vvv -H "Authorization: Bearer $token" $(minishift openshift service cars-api)/cars/list
+----
+
+Above command you should see a response like `["BMW","Hyundai Verna","Audi","Ferrari"]`
+
+== Docker Images 
+- https://hub.docker.com/r/kameshsampath/pilot/ 
+- https://hub.docker.com/r/kameshsampath/proxy/
+- https://hub.docker.com/r/kameshsampath/proxy_debug/
+- https://hub.docker.com/r/kameshsampath/cars_api/ (demo application)
