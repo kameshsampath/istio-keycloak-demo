@@ -1,0 +1,19 @@
+= Cars Application
+
+Work in Progress ...
+
+== Pre-requisites
+- https://github.com/minishift/minishift#[Minishift]
+- https://istio.io/docs/setup/kubernetes/quick-start.html#[Deploy Istio]
+
+== Deploying Keycloak
+
+== Deploying Istio Pilot
+
+== Building
+
+[IMPORTANT]
+====
+Since we will be doing manual kube-inject of Istio sidecars its required that you login to OpenShift as `admin`, to have permission
+to lookup configmaps in other namespaces
+====

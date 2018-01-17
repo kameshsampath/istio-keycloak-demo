@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<project name="istio-api-gateway">
+  <property name="isto-dest-dir" value="${base_dir}/src/istio"/>
+  <property name="current_project" value="${currentProject}"/>
+  <property name="istioctl.file" value="${istio.home}/bin/istioctl"/>
+  <target name="merge">
+    <!--clean existing files -->
+    <delete file="${basedir}/src/istio/${project_id}-all.yml"/>
+    <delete file="${basedir}/src/istio/istio-${project_id}-all.yml"/>
+    <concat destfile="${basedir}/src/istio/${project_id}-all.yml">
+      <fileset dir="${basedir}/target/classes/META-INF/fabric8/kubernetes" includes="*.yml"/>
+      <fileset dir="${basedir}/target/classes/META-INF/fabric8/openshift" includes="*-route.yml"/>
+    </concat>
+  </target>
+  <target name="istioctl" depends="merge">
+    <echo message="Running ${istioctl.file} with Project: ${current_project} "/>
+    <exec dir="${isto-dest-dir}" executable="${istioctl.file}">
+      <arg line="kube-inject -n${current_project} -f ${project_id}-all.yml -o istio-${project_id}-all.yml"/>
+    </exec>
+  </target>
+</project>
