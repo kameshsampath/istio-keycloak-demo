@@ -19,7 +19,7 @@ kind: rule
 metadata:
   name: denycarspi
 spec:
-  match: destination.name=="cars-api" && (request.headers["authorization"]|"unauthorized") == "unauthorized"
+  match: destination.labels["app"]=="cars-api" && (request.headers["authorization"]|"unauthorized") == "unauthorized"
   actions:
   - handler: handler.denier
     instances: [ denyrequest.checknothing]
