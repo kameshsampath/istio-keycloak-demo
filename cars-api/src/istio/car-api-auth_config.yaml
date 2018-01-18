@@ -1,0 +1,25 @@
+--- 
+apiVersion: config.istio.io/v1alpha2
+kind: EndUserAuthenticationPolicySpec
+metadata: 
+  name: cars-api-auth-policy
+  namespace: myproject
+spec: 
+  jwts: 
+    - issuer: http://keycloak.myproject:8080/auth/realms/istio
+      jwks_uri: http://keycloak.myproject:8080/auth/realms/istio/protocol/openid-connect/certs
+      audiences: 
+      - cars-web     
+--- 
+apiVersion: config.istio.io/v1alpha2
+kind: EndUserAuthenticationPolicySpecBinding
+metadata:
+  name: cars-api-auth-policy-binding
+  namespace: myproject
+spec:
+  policies:
+    - name: cars-api-auth-policy
+      namespace: myproject
+  services:
+    - name: cars-api
+      namespace: myproject

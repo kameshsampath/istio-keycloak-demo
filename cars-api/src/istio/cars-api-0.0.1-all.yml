@@ -3,28 +3,28 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   annotations:
-    fabric8.io/metrics-path: dashboard/file/kubernetes-pods.json/?var-project=car-api&var-version=0.0.1-SNAPSHOT
+    fabric8.io/metrics-path: dashboard/file/kubernetes-pods.json/?var-project=cars-api&var-version=0.0.1
   labels:
-    app: car-api
+    app: cars-api
     provider: fabric8
-    version: 0.0.1-SNAPSHOT
+    version: 0.0.1
     group: com.redhat.developers
-  name: car-api
+  name: cars-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: car-api
+      app: cars-api
       provider: fabric8
       group: com.redhat.developers
   template:
     metadata:
       annotations:
-        fabric8.io/metrics-path: dashboard/file/kubernetes-pods.json/?var-project=car-api&var-version=0.0.1-SNAPSHOT
+        fabric8.io/metrics-path: dashboard/file/kubernetes-pods.json/?var-project=cars-api&var-version=0.0.1
       labels:
-        app: car-api
+        app: cars-api
         provider: fabric8
-        version: 0.0.1-SNAPSHOT
+        version: 0.0.1
         group: com.redhat.developers
     spec:
       containers:
@@ -33,7 +33,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: car-api:latest
+        image: kameshsampath/cars-api:0.0.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -66,11 +66,11 @@ kind: Service
 metadata:
   labels:
     expose: "true"
-    app: car-api
+    app: cars-api
     provider: fabric8
-    version: 0.0.1-SNAPSHOT
+    version: 0.0.1
     group: com.redhat.developers
-  name: car-api
+  name: cars-api
 spec:
   ports:
   - name: http
@@ -78,7 +78,7 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    app: car-api
+    app: cars-api
     provider: fabric8
     group: com.redhat.developers
 ---
@@ -87,14 +87,14 @@ kind: Route
 metadata:
   labels:
     expose: "true"
-    app: car-api
+    app: cars-api
     provider: fabric8
-    version: 0.0.1-SNAPSHOT
+    version: 0.0.1
     group: com.redhat.developers
-  name: car-api
+  name: cars-api
 spec:
   port:
     targetPort: 8080
   to:
     kind: Service
-    name: car-api
+    name: cars-api

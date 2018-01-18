@@ -4,9 +4,7 @@ Work in Progress ...
 
 == Pre-requisites
 - https://github.com/minishift/minishift#[Minishift] - Kubernetes platform
-- https://istio.io/docs/setup/kubernetes/quick-start.html#[Deploy Istio] - check the section for OpenShift
-  (or)
-  Use the https://github.com/minishift/minishift-addons/tree/master/add-ons/istio#[istio addon for minishift]
+- Use the https://github.com/minishift/minishift-addons/tree/master/add-ons/istio#[istio addon for minishift]
 - https://stedolan.github.io/jq/[jq] - will be used to parse JSON responses
 
 == Download the sources 
@@ -20,52 +18,63 @@ We will call this folder as `$DEMO_HOME` in rest of the document.
 
 == Deploying Keycloak
 
-Since Keycloak will be used as security provider, we will have the same deployed to `istio-system`
-namespace, 
+Since Keycloak will be used as security provider
 
 [source,sh]
 ----
-oc project istio-system
 oc apply -f $DEMO_HOME/openshift-files/keycloak.yaml
 ----
 
-Once Keycloak is deployed and running:
+To Open Keycloak WebConsole run the command `minishift openshift service keycloak --in-browser`
 
-* Create a realm called `istio`
-* Create a public client called `cars-web` 
-* Create a role `user`
-* Add a user say `demo` and add the user to `user` role
+Using Keycloak WebConsole :
 
-NOTE: Work in progress do the above steps via Keycloak Admin API automatically
+* Create a Keycloak realm called `istio`
+* Create a public client called `cars-web` under realm `istio`
+* Create a role `user` under realm `istio`
+** Add a user say `demo`  under realm `istio` and add the user to `user` role
 
-== Deploying Istio Pilot
-
-Since the proxy module has been patched with the changes required, it is needed to redeploy istio-pilot, isito-ingress and istio-mixer to 
-use the custom proxy image `docker.io/kameshsampath/proxy_debug:master` or  `docker.io/kameshsampath/proxy:master`.  To patch the istio run
-following commands: 
-
-[source,sh]
-----
-oc apply -f $DEMO_HOME/openshift-files/istio-patch.yaml
-oc apply -f $DEMO_HOME/openshift-files/keycloak.yaml
-----
+[NOTE]
+====
+* Keycloak is configured with default admin user `admin` and password `admin`
+* Work in progress do the above steps via Keycloak Admin API automatically
+====
 
 == Building
 
 [IMPORTANT]
 ====
-Since we will be doing manual kube-inject of Istio sidecars its required that you login to OpenShift as `admin`, to have permission
-to lookup configmaps in other namespaces
+* Since we will be doing manual kube-inject of Istio sidecars its required that you login to OpenShift as `admin`, to have permission
+to lookup configmaps in other namespaces especially from istio-system
+* oc adm policy add-scc-to-user privileged -z default -n <your project>
 ====
 
+[[cars-api]]
 === Cars API
 
 [source,sh]
 ----
-./mvnw clean package
-oc apply -f $DEMO_HOME/src/istio/istio-cars-api-0.0.1-SNAPSHOT.yaml
+./mvnw -Distio.home=[your istio home folder] clean package fabric8:build <1>
+oc apply -f $DEMO_HOME/src/istio/istio-cars-api-0.0.1.yml <2>
 ----
 
+<1> Build the app, create the kube-injected yaml and the docker image of the application
+<2> Deploy the application to OpenShift
+
+[[cars-api-auth-spec]]
+=== Create Istio Authentication Spec and Binding
+
+To configure the JWT-Auth Filter and the required cluster we need to configure Istio
+
+[source,sh]
+----
+oc apply -f $DEMO_HOME/src/istio/car-api-auth_config.yaml
+----
+
+The End user auth spec will add JWT-Auth filter to the Mixer config of the cars-api application
+and add `keycloak` cluster to the CDS. Refer to <<query-istio>> section to know to query and check config
+
+[[cars-api-mixer-rule]]
 === Create Istio mixer rule
 
 Since we want to have only protected access to the application api `cars-api` list,  we need to add Istio mixer rule that will allow
@@ -76,12 +85,15 @@ only authorized users to access the API, the following command will help to crea
 istioctl create -f $DEMO_HOME/cars-api/src/istio/mixer-rule-only-authorized.yaml
 ----
 
+[[cars-web-app]]
 === Cars Web Application
 
 NOTE: WIP post JWT-Auth change to configure the Keycloak Adapter url in a right way
 
+[[testing-app]]
 == Testing Application
 
+[[testing-without-token]]
 === Without Token 
 
 [source,sh]
@@ -92,8 +104,10 @@ curl -vvv $(minishift openshift service cars-api)/cars/list
 Above command you should see a response like `UNKNOWN:handler.denier.default:Not Authorized` as the API
 is protected
 
+[[testing-with-token]]
 === With Token
 
+[[testing-with-token-gen]]
 ==== Generate Token
 
 [source,sh]
@@ -116,8 +130,44 @@ curl -vvv -H "Authorization: Bearer $token" $(minishift openshift service cars-a
 
 Above command you should see a response like `["BMW","Hyundai Verna","Audi","Ferrari"]`
 
-== Docker Images 
-- https://hub.docker.com/r/kameshsampath/pilot/ 
-- https://hub.docker.com/r/kameshsampath/proxy/
-- https://hub.docker.com/r/kameshsampath/proxy_debug/
-- https://hub.docker.com/r/kameshsampath/cars_api/ (demo application)
+[[query-istio]]
+== Querying Istio
+
+Istio LDS, CDS, SDS could be queried using the script available in https://github.com/istio/istio/blob/master/bin/istio-proxy-cfg
+
+[[query-istio-lds]]
+=== Querying LDS 
+
+To Query https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/lds#[LDS] run the following command
+
+[source,sh]
+----
+oc get pods <1>
+
+istio-proxy-cfg lds sidecar <your pod id> <2>
+
+minishift ssh <curl url from previous command> <3>
+----
+<1> find the pod id for cars-api
+<2> this command will not succeed as the curl cant reach the istio from outside of minishift,
+ by default we did not expose istio-pilot
+<3> execute the curl command to see the LDS config
+
+[[query-istio-cds]]
+=== Querying CDS 
+
+To Query https://www.envoyproxy.io/docs/envoy/latest/configuration/cluster_manager/cds#[CDS] run the following command
+
+[source,sh]
+----
+oc get pods <1>
+
+istio-proxy-cfg cds sidecar <your pod id> <2>
+
+minishift ssh <curl url from previous command> <3>
+----
+<1> find the pod id for cars-api
+<2> this command will not succeed as the curl cant reach the istio from outside of minishift,
+ by default we did not expose istio-pilot
+<3> execute the curl command to see the CDS config, you will see an extra cluster added
+for keycloak based on the <<cars-api-auth-spec>>
