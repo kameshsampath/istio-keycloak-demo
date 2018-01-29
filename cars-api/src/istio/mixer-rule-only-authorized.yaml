@@ -2,24 +2,27 @@
 apiVersion: "config.istio.io/v1alpha2"
 kind: denier
 metadata:
-  name: handler
+  name: carsapi-handler
+  namespace: istio-system
 spec:
   status:
-    code: 401
-    message: Not Authorized
+    code: 16
+    message: You must be authenticated to access the service
 ---
 apiVersion: "config.istio.io/v1alpha2"
 kind: checknothing
 metadata:
-  name: denyrequest
+  name: carsapi-denyrequest
+  namespace: istio-system
 spec:
 ---
 apiVersion: "config.istio.io/v1alpha2"
 kind: rule
 metadata:
-  name: denycarspi
+  name: carspi-deny
+  namespace: istio-system
 spec:
-  match: destination.labels["app"]=="cars-api" && (request.headers["authorization"]|"unauthorized") == "unauthorized"
+  match: destination.service == "cars-api.myproject.svc.cluster.local" && request.headers["authorization"] == "unauthorized"
   actions:
-  - handler: handler.denier
-    instances: [ denyrequest.checknothing]
+  - handler: carsapi-handler.denier.istio-system
+    instances: [carsapi-denyrequest.checknothing.istio-system]
