@@ -3,26 +3,26 @@ apiVersion: "config.istio.io/v1alpha2"
 kind: denier
 metadata:
   name: carsapi-handler
-  namespace: istio-system
+  namespace: myproject
 spec:
   status:
     code: 16
-    message: You must be authenticated to access the service
+    message: You are not authorized to access the service
 ---
 apiVersion: "config.istio.io/v1alpha2"
 kind: checknothing
 metadata:
   name: carsapi-denyrequest
-  namespace: istio-system
+  namespace: myproject
 spec:
 ---
 apiVersion: "config.istio.io/v1alpha2"
 kind: rule
 metadata:
   name: carspi-deny
-  namespace: istio-system
+  namespace: myproject
 spec:
-  match: destination.service == "cars-api.myproject.svc.cluster.local" && request.headers["authorization"] == "unauthorized"
+  match: destination.labels["app"] == "cars-api" && destination.namespace == "myproject" && request.path == "/cars/list" && (request.headers["authorization"]|"unauthorized") == "unauthorized"
   actions:
-  - handler: carsapi-handler.denier.istio-system
-    instances: [carsapi-denyrequest.checknothing.istio-system]
+  - handler: carsapi-handler.denier.myproject
+    instances: [carsapi-denyrequest.checknothing.myproject]
