@@ -22,7 +22,7 @@ metadata:
   name: carspi-deny
   namespace: myproject
 spec:
-  match: destination.labels["app"] == "cars-api" && destination.namespace == "myproject" && request.path == "/cars/list" && (request.headers["authorization"]|"unauthorized") == "unauthorized"
+  match: destination.labels["app"] == "cars-api" && destination.namespace == "myproject" && request.path == "/cars/list" && (request.headers["sec-istio-auth-userinfo"]|"unauthorized") == "unauthorized"
   actions:
   - handler: carsapi-handler.denier.myproject
     instances: [carsapi-denyrequest.checknothing.myproject]
