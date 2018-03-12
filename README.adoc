@@ -55,7 +55,7 @@ to lookup configmaps in other namespaces especially from istio-system
 [source,sh]
 ----
 ./mvnw -Distio.home=[your istio home folder] clean package fabric8:build <1>
-oc apply -f $DEMO_HOME/src/istio/istio-cars-api-0.0.1.yml <2>
+oc apply -f $DEMO_HOME/cars-api/src/istio/istio-cars-api-0.0.1.yml <2>
 ----
 
 <1> Build the app, create the kube-injected yaml and the docker image of the application
@@ -68,7 +68,7 @@ To configure the JWT-Auth Filter and the required cluster we need to configure I
 
 [source,sh]
 ----
-oc apply -f $DEMO_HOME/src/istio/car-api-auth_config.yaml
+oc apply -f $DEMO_HOME/cars-api/src/istio/car-api-auth_config.yaml
 ----
 
 The End user auth spec will add JWT-Auth filter to the Mixer config of the cars-api application
